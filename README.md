@@ -34,3 +34,39 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Below are the picture and result from the API
+
+<img width="1821" height="897" alt="image" src="https://github.com/user-attachments/assets/670423b1-4380-4474-acb9-fd52acc5430b" />
+
+<img width="1825" height="977" alt="image" src="https://github.com/user-attachments/assets/c63c6f6c-02fc-41dd-b0df-1aa91d8f3af3" />
+
+And this is the JSON Result from the API
+
+{
+  "success": true,
+  "data": {
+    "id": "e1f9d4c4-e385-4a7c-a246-ba2a6ad06de5",
+    "nik": "320101010101",
+    "ktpFile": "1778199647724-KTP.txt",
+    "npwpFile": "1778199647727-NPWP.txt",
+    "skckFile": "1778199647729-SKCK.txt",
+    "dukcapil": {
+      "nik": "320101010101",
+      "valid": true,
+      "name": "Bayu Pratama"
+    },
+    "creditScore": 626,
+    "skckAnalysis": {
+      "valid": false,
+      "reason": "criminal record found"
+    },
+    "aiDecision": "NOT_APPROVED",
+    "aiReason": "AI parse failed",
+    "riskLevel": "HIGH",
+    "status": "NOT_APPROVED",
+    "createdAt": "2026-05-08T00:24:49.884Z"
+  }
+}
+
+
