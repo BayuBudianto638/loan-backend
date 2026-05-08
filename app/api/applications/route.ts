@@ -123,39 +123,60 @@ export async function POST(
     const aiResult =
       await askPhiAI({
         nik,
-
         dukcapil,
-
         creditScore,
-
         skckAnalysis,
-
         documents: {
           ktpUploaded: true,
-
           npwpUploaded: true,
-
           skckUploaded: true
         }
       });
 
+      const shouldApprove =
+  dukcapil.valid &&
+  skckAnalysis.valid &&
+  creditScore >= 550;
+
+  if (
+    shouldApprove &&
+    aiResult.decision !==
+      'APPROVED'
+  ) {
+    aiResult.decision =
+      'APPROVED';
+
+    aiResult.reason =
+      'AI corrected by consistency validator';
+
+    aiResult.riskLevel =
+      'LOW';
+  }
+
+  if (
+    !shouldApprove &&
+    aiResult.decision ===
+      'APPROVED'
+  ) {
+    aiResult.decision =
+      'REJECTED';
+
+    aiResult.reason =
+      'AI corrected by consistency validator';
+
+    aiResult.riskLevel =
+      'HIGH';
+  }
+
     const app = {
       id: crypto.randomUUID(),
-
       nik,
-
       ktpFile,
-
       npwpFile,
-
       skckFile,
-
       dukcapil,
-
       creditScore,
-
       skckAnalysis,
-
       aiDecision:
         aiResult.decision,
 

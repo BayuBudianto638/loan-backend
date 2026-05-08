@@ -4,32 +4,42 @@ export async function askPhiAI(
   payload: any
 ) {
   const prompt = `
-You are an AI loan approval officer.
+You are a strict loan approval AI.
 
-RULES:
-- Reject if Dukcapil invalid
-- Reject if criminal record exists
-- Approve if credit score >= 550
-- Approve if SKCK valid
-- Reject if score below 550
+You MUST follow these rules EXACTLY:
+
+APPROVE ONLY IF:
+- dukcapil.valid = true
+- skckAnalysis.valid = true
+- creditScore >= 550
+
+REJECT IF:
+- dukcapil.valid = false
+- skckAnalysis.valid = false
+- creditScore < 550
 
 Applicant Data:
 ${JSON.stringify(payload, null, 2)}
 
-Return ONLY JSON.
+IMPORTANT:
+- Follow the rules strictly
+- Do not invent reasons
+- Return ONLY JSON
+- No markdown
+- No explanation outside JSON
 
-If approved:
+Approved example:
 {
-  "decision": "APPROVED",
-  "reason": "Applicant eligible",
-  "riskLevel": "LOW"
+  "decision":"APPROVED",
+  "reason":"Applicant eligible",
+  "riskLevel":"LOW"
 }
 
-If rejected:
+Rejected example:
 {
-  "decision": "REJECTED",
-  "reason": "Applicant not eligible",
-  "riskLevel": "HIGH"
+  "decision":"REJECTED",
+  "reason":"Applicant not eligible",
+  "riskLevel":"HIGH"
 }
 `;
 
@@ -38,11 +48,8 @@ If rejected:
       'http://localhost:11434/api/generate',
       {
         model: 'gemma3:270m',
-
         prompt,
-
         stream: false,
-
         format: 'json'
       }
     );
@@ -55,7 +62,6 @@ If rejected:
       text
     );
 
-    // CLEAN RESPONSE
     text = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -64,30 +70,16 @@ If rejected:
     const parsed =
       JSON.parse(text);
 
-    return {
-      decision:
-        parsed.decision ??
-        'NOT_APPROVED',
-
-      reason:
-        parsed.reason ??
-        'No reason',
-
-      riskLevel:
-        parsed.riskLevel ??
-        'HIGH'
-    };
+    return parsed;
   } catch (err: any) {
     console.log(
-      'FINAL AI ERROR:',
+      'AI ERROR:',
       err.message
     );
 
     return {
-      decision: 'NOT_APPROVED',
-
+      decision: 'REJECTED',
       reason: 'AI parse failed',
-
       riskLevel: 'HIGH'
     };
   }
@@ -104,21 +96,19 @@ Determine whether the document contains criminal history.
 
 IMPORTANT:
 - "no criminal records" = CLEAN
-- "no crimes" = CLEAN
 - "good citizen" = CLEAN
-- "criminal record exists" = NOT CLEAN
-- "robbery" = NOT CLEAN
-- "fraud case" = NOT CLEAN
+- "criminal history exists" = NOT CLEAN
+- "robbery case" = NOT CLEAN
 
 DOCUMENT:
 ${skckText}
 
-Return ONLY JSON:
+Return ONLY JSON.
 
 If clean:
 {"valid":true,"reason":"clean record"}
 
-If criminal history exists:
+If criminal:
 {"valid":false,"reason":"criminal record found"}
 `;
 
@@ -149,7 +139,34 @@ If criminal history exists:
       .replace(/```/g, '')
       .trim();
 
-    return JSON.parse(text);
+    const parsed =
+      JSON.parse(text);
+
+    const reason =
+      String(parsed.reason || '')
+        .toLowerCase();
+
+    let valid =
+      Boolean(parsed.valid);
+
+    // SAFETY NORMALIZATION
+    if (
+      reason.includes('criminal')
+    ) {
+      valid = false;
+    }
+
+    if (
+      reason.includes('clean')
+    ) {
+      valid = true;
+    }
+
+    return {
+      valid,
+
+      reason: parsed.reason
+    };
   } catch (err: any) {
     console.log(
       'SKCK AI ERROR:',
@@ -158,6 +175,7 @@ If criminal history exists:
 
     return {
       valid: false,
+
       reason: 'AI parse failed'
     };
   }
