@@ -6,44 +6,88 @@ export async function askPhiAI(
   const prompt = `
 You are an AI loan approval officer.
 
-Analyze all applicant data carefully.
-
-Rules:
+RULES:
 - Reject if Dukcapil invalid
 - Reject if criminal record exists
 - Approve if credit score >= 550
-- Analyze all risks
+- Approve if SKCK valid
+- Reject if score below 550
 
 Applicant Data:
 ${JSON.stringify(payload, null, 2)}
 
-Return ONLY valid JSON.
+Return ONLY JSON.
 
-Example:
+If approved:
 {
   "decision": "APPROVED",
-  "reason": "Good applicant",
+  "reason": "Applicant eligible",
   "riskLevel": "LOW"
+}
+
+If rejected:
+{
+  "decision": "REJECTED",
+  "reason": "Applicant not eligible",
+  "riskLevel": "HIGH"
 }
 `;
 
-  const response = await axios.post(
-    'http://localhost:11434/api/generate',
-    {
-      model: 'phi',
-      prompt,
-      stream: false
-    }
-  );
-
-  const text = response.data.response;
-
   try {
-    return JSON.parse(text);
-  } catch {
+    const response = await axios.post(
+      'http://localhost:11434/api/generate',
+      {
+        model: 'gemma3:270m',
+
+        prompt,
+
+        stream: false,
+
+        format: 'json'
+      }
+    );
+
+    let text =
+      response.data.response;
+
+    console.log(
+      'FINAL AI RAW:',
+      text
+    );
+
+    // CLEAN RESPONSE
+    text = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const parsed =
+      JSON.parse(text);
+
+    return {
+      decision:
+        parsed.decision ??
+        'NOT_APPROVED',
+
+      reason:
+        parsed.reason ??
+        'No reason',
+
+      riskLevel:
+        parsed.riskLevel ??
+        'HIGH'
+    };
+  } catch (err: any) {
+    console.log(
+      'FINAL AI ERROR:',
+      err.message
+    );
+
     return {
       decision: 'NOT_APPROVED',
+
       reason: 'AI parse failed',
+
       riskLevel: 'HIGH'
     };
   }
@@ -53,42 +97,65 @@ export async function analyzeSKCK(
   skckText: string
 ) {
   const prompt = `
-You are an AI criminal record detector.
+You are a classifier.
 
-Analyze this SKCK document.
+TASK:
+Determine whether the document contains criminal history.
 
-If criminal history exists return:
-{
-  "valid": false,
-  "reason": "criminal record found"
-}
+IMPORTANT:
+- "no criminal records" = CLEAN
+- "no crimes" = CLEAN
+- "good citizen" = CLEAN
+- "criminal record exists" = NOT CLEAN
+- "robbery" = NOT CLEAN
+- "fraud case" = NOT CLEAN
 
-If clean return:
-{
-  "valid": true,
-  "reason": "clean record"
-}
-
-SKCK:
+DOCUMENT:
 ${skckText}
 
-Return ONLY JSON.
+Return ONLY JSON:
+
+If clean:
+{"valid":true,"reason":"clean record"}
+
+If criminal history exists:
+{"valid":false,"reason":"criminal record found"}
 `;
 
-  const response = await axios.post(
-    'http://localhost:11434/api/generate',
-    {
-      model: 'phi',
-      prompt,
-      stream: false
-    }
-  );
-
   try {
-    return JSON.parse(
-      response.data.response
+    const response = await axios.post(
+      'http://localhost:11434/api/generate',
+      {
+        model: 'gemma3:270m',
+
+        prompt,
+
+        stream: false,
+
+        format: 'json'
+      }
     );
-  } catch {
+
+    let text =
+      response.data.response;
+
+    console.log(
+      'RAW AI RESPONSE:',
+      text
+    );
+
+    text = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    return JSON.parse(text);
+  } catch (err: any) {
+    console.log(
+      'SKCK AI ERROR:',
+      err.message
+    );
+
     return {
       valid: false,
       reason: 'AI parse failed'

@@ -116,6 +116,7 @@ export async function POST(
           (700 - 300 + 1)
       ) + 300;
 
+    console.log(skckText);
     const skckAnalysis =
       await analyzeSKCK(skckText);
 
