@@ -45,7 +45,7 @@ And this is the JSON Result from the API
 
 # API Response Example
 
-This file contains an example JSON response returned by the API. Paste the following into your `README.md` to display it as a formatted JSON code block.
+This file contains an example JSON response returned by the API.
 
 ```json
 {
