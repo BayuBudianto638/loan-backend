@@ -73,4 +73,9 @@ This file contains an example JSON response returned by the API. Paste the follo
     "createdAt": "2026-05-08T00:24:49.884Z"
   }
 }
+```
 
+# Challenge for implementing the system
+1. Multiple ID Card, there are known that people in Indonesia have multiple ID Card
+2. Unintegrated system between Dukcapil, Credit Score and Criminal Records or Banking Statements
+3. Infrastructures for the system to run in Indonesia is still far away from other countries
