@@ -43,6 +43,7 @@ Below are the picture and result from the API
 
 And this is the JSON Result from the API
 
+```json
 {
   "success": true,
   "data": {
@@ -68,5 +69,4 @@ And this is the JSON Result from the API
     "createdAt": "2026-05-08T00:24:49.884Z"
   }
 }
-
 
